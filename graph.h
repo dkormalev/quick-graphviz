@@ -30,7 +30,7 @@ public:
     void setName(QString name);
 
 signals:
-    void graphBuilt(const QImage &graphImage);
+    void graphBuilt(const QImage &graphImage, const QHash<QString, QRectF> &nodes);
     void nameChanged(QString name);
 
 private:

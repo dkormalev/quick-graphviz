@@ -125,12 +125,14 @@ void Graph::buildGraph()
         double yOffset = -GD_bb(graph).LL.y;
 
         QImage graphImage(width, height, QImage::Format_ARGB32);
+        QHash<QString, QRectF> nodesPositions;
         graphImage.fill(Qt::white);
         {
             QPainter painter(&graphImage);
             painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform);
             painter.setPen(QPen(QBrush(Qt::black), 2.0));
-            for (auto node : graphvizNodes.values()) {
+            for (const QString &nodeId : graphvizNodes.keys()) {
+                auto node = graphvizNodes[nodeId];
                 QPointF nodeCenter((ND_coord(node).x + xOffset) * dpiFactor,
                                    height - ((ND_coord(node).y + yOffset) * dpiFactor));
                 double width = ND_width(node) * graphDpi;
@@ -140,15 +142,14 @@ void Graph::buildGraph()
                                 width, height);
                 painter.drawEllipse(nodeRect);
                 painter.drawText(nodeRect, Qt::AlignCenter, ND_label(node)->text);
+                nodesPositions[nodeId] = nodeRect;
             }
             for (auto edge : graphvizEdges.values()) {
                 QPainterPath path;
                 splines *splinesList = ED_spl(edge);
-                qDebug() << splinesList->list;
                 if (!splinesList->list)
                     continue;
                 bezier bezierInfo = splinesList->list[0];
-                qDebug() << bezierInfo.sflag << bezierInfo.eflag << bezierInfo.size;
                 if (bezierInfo.sflag) {
                     path.moveTo((bezierInfo.sp.x + xOffset) * dpiFactor,
                                 height - ((bezierInfo.sp.y + yOffset) * dpiFactor));
@@ -171,7 +172,7 @@ void Graph::buildGraph()
             }
         }
 
-        emit graphBuilt(graphImage);
+        emit graphBuilt(graphImage, nodesPositions);
 
         for (auto edge : graphvizEdges.values())
             agdelete(graph, edge);
